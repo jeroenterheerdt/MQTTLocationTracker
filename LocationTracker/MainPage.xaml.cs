@@ -22,6 +22,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.Data.Xml.Dom;
+using Newtonsoft.Json;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -36,6 +37,11 @@ namespace LocationTracker
         private uint _interval;
         ExtendedExecutionSession session = null;
         private Timer periodicTimer = null;
+        ApplicationDataContainer localSettings;
+        StorageFolder localFolder;
+
+        private long counter;
+
         public enum NotifyType
         {
             StatusMessage,
@@ -57,7 +63,11 @@ namespace LocationTracker
             cb_ssl_protocol_version.ItemsSource = Enum.GetValues(typeof(MqttSslProtocols)).Cast<MqttSslProtocols>().ToList();
             cb_ssl_protocol_version.SelectedIndex = 0;
 
-            
+            localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
+            ReadAllSettings();
+
+            counter = 0;
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
@@ -82,15 +92,13 @@ namespace LocationTracker
                 periodicTimer = null;
             }
         }
-        private void ConnectToBroker(string h, int p, Boolean s, MqttSslProtocols sp, MqttProtocolVersion v)
+        private void ConnectToBroker(string h, int p, Boolean s, MqttSslProtocols sp, MqttProtocolVersion v,string username, string password)
         {
             this.client = new MqttClient(h, p, s, sp);
             //for built in mqtt broker of home assistant
             this.client.ProtocolVersion = v;
-            this.client.Connect(Guid.NewGuid().ToString());
-
-            
-        }
+            this.client.Connect(Guid.NewGuid().ToString(),username,password);
+}
 
         private void bt_connect_Click(object sender, RoutedEventArgs e)
         {
@@ -132,31 +140,70 @@ namespace LocationTracker
                             }
                             else
                             {
-                                //parse the input values
-                                var sslprotocol = (MqttSslProtocols)Enum.Parse(typeof(MqttSslProtocols), cb_ssl_protocol_version.SelectedItem.ToString());
-                                var protocolversion = (MqttProtocolVersion)Enum.Parse(typeof(MqttProtocolVersion), cb_protocol_version.SelectedItem.ToString());
-                                this._interval = interval;
-                                //connect
-                                try
+                                if(tb_topic.Text.Trim().Length==0)
                                 {
-                                    ConnectToBroker(tb_broker.Text, port, cb_secure.IsChecked.Value, sslprotocol, protocolversion);
-
-                                    
-                                    //register extended execution.
-                                    BeginExtendedExecution();
+                                    //invalid topic
+                                    NotifyUser("Enter a valid topic", NotifyType.ErrorMessage);
                                 }
-                                catch (Exception ex)
+                                else
                                 {
-                                    NotifyUser(ex.Message,NotifyType.ErrorMessage);
+                                    //parse the input values
+                                    var sslprotocol = (MqttSslProtocols)Enum.Parse(typeof(MqttSslProtocols), cb_ssl_protocol_version.SelectedItem.ToString());
+                                    var protocolversion = (MqttProtocolVersion)Enum.Parse(typeof(MqttProtocolVersion), cb_protocol_version.SelectedItem.ToString());
+                                    this._interval = interval;
+                                    //connect
+                                    try
+                                    {
+                                        //store all settings
+                                        StoreAllSettings();
+                                        ConnectToBroker(tb_broker.Text, port, cb_secure.IsChecked.Value, sslprotocol, protocolversion, tb_username.Text, tb_password.Password);
+
+
+                                        //register extended execution.
+                                        BeginExtendedExecution(_interval);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        NotifyUser(ex.Message+": "+ex.InnerException, NotifyType.ErrorMessage);
+                                    }
                                 }
                             }
+                            
                         }
                     }
                 }
             }
         }
 
-        private async void BeginExtendedExecution()
+        private void StoreAllSettings()
+        {
+            localSettings.Values["broker"] = tb_broker.Text;
+            localSettings.Values["port"] = tb_port.Text;
+            localSettings.Values["protocolversion"] = cb_protocol_version.SelectedValue.ToString();
+            localSettings.Values["sslprotocol"] = cb_ssl_protocol_version.SelectedValue.ToString();
+            localSettings.Values["secure"] = cb_secure.IsChecked.ToString();
+            localSettings.Values["username"] = tb_username.Text;
+            localSettings.Values["password"] = tb_password.Password;
+            localSettings.Values["deviceid"] = tb_deviceid.Text;
+            localSettings.Values["interval"] = tb_interval.Text;
+            localSettings.Values["topic"] = tb_topic.Text;
+        }
+
+        private void ReadAllSettings()
+        {
+            if(localSettings.Values.Keys.Contains("broker")) tb_broker.Text = localSettings.Values["broker"].ToString();
+            if(localSettings.Values.Keys.Contains("port")) tb_port.Text = localSettings.Values["port"].ToString();
+            if (localSettings.Values.Keys.Contains("protocolversion")) cb_protocol_version.SelectedItem = localSettings.Values["protocolversion"];
+            if (localSettings.Values.Keys.Contains("sslprotocol")) cb_ssl_protocol_version.SelectedItem = localSettings.Values["sslprotocol"];
+            if (localSettings.Values.Keys.Contains("secure")) cb_secure.IsChecked = bool.Parse(localSettings.Values["secure"].ToString());
+            if (localSettings.Values.Keys.Contains("username")) tb_username.Text = localSettings.Values["username"].ToString();
+            if (localSettings.Values.Keys.Contains("password")) tb_password.Password = localSettings.Values["password"].ToString();
+            if (localSettings.Values.Keys.Contains("deviceid")) tb_deviceid.Text = localSettings.Values["deviceid"].ToString();
+            if (localSettings.Values.Keys.Contains("interval")) tb_interval.Text = localSettings.Values["interval"].ToString();
+            if (localSettings.Values.Keys.Contains("topic")) tb_topic.Text = localSettings.Values["topic"].ToString();
+        }
+
+        private async void BeginExtendedExecution(uint interval)
         {
             // The previous Extended Execution must be closed before a new one can be requested.
             // This code is redundant here because the sample doesn't allow a new extended
@@ -175,7 +222,7 @@ namespace LocationTracker
                     this.NotifyUser("Extended execution allowed. Please navigate away from this app.", NotifyType.StatusMessage);
                     session = newSession;
                     Geolocator geolocator = await StartLocationTrackingAsync();
-                    periodicTimer = new Timer(OnTimer, geolocator, TimeSpan.FromSeconds(_interval), TimeSpan.FromSeconds(10));
+                    periodicTimer = new Timer(OnTimer, geolocator, TimeSpan.FromSeconds(interval), TimeSpan.FromSeconds(10));
                     break;
 
                 default:
@@ -210,13 +257,20 @@ namespace LocationTracker
                     BasicGeoposition basicPosition = gc.Point.Position;
                     
                     //message = "{\"_type": "location", "lat": "' + basicPosition.Latitude + '", "lon": "' + basicPosition.Longitude + '", "tst": "' + timestamp + '"';
-                    message = "k";
                     OwntracksLocationMessage locmsg = new OwntracksLocationMessage(basicPosition.Latitude, basicPosition.Longitude, gc.Accuracy);
+                    message = JsonConvert.SerializeObject(locmsg);
                     //no toast, just send it to the MQTT broker.
                     //this.client.Publish("home-assistant/jeroen", System.Text.Encoding.UTF8.GetBytes("{'message': 'barf'}"));
                     try
                     {
-                        this.client.Publish("home-assistant/jeroen", System.Text.Encoding.UTF8.GetBytes(message));
+                        await Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                        { 
+                            this.client.Publish(tb_topic.Text, System.Text.Encoding.UTF8.GetBytes(message));
+                            
+                            
+                        });
+                        counter++;
+                        NotifyUser("Total location messages sent: " + counter.ToString(), NotifyType.StatusMessage);
                     }
                     catch(Exception ex)
                     {
@@ -390,6 +444,22 @@ namespace LocationTracker
                 StatusPanel.Visibility = Visibility.Collapsed;
             }
         }
-        
+
+        private void tb_username_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            SetTopicText();
+        }
+
+        private void SetTopicText()
+        {
+            var splits = tb_topic.Text.Split('/');
+
+            tb_topic.Text = "/" + splits[1] + "/" + tb_username.Text + "/" + tb_deviceid.Text;
+        }
+
+        private void tb_deviceid_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            SetTopicText();
+        }
     }
 }

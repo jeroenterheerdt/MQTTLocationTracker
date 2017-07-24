@@ -7,25 +7,29 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <StackPanel HorizontalAlignment="Left" Height="640" VerticalAlignment="Top" Width="360">
-            <TextBox x:Name="tb_broker" TextWrapping="Wrap" Text="" Header="MQTT broker:"/>
-            <TextBox x:Name="tb_port" TextWrapping="Wrap" Text="1883" Header="MQTT port:"/>
-            <TextBlock TextWrapping="Wrap" Text="MQTT protocol version:"/>
-            <ComboBox x:Name="cb_protocol_version" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-            <CheckBox x:Name="cb_secure" Content="Use secure connection" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-            <ComboBox x:Name="cb_ssl_protocol_version" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Header="SSL Protocol:"/>
-            <TextBox x:Name="tb_interval" TextWrapping="Wrap" Text="30" Header="Interval (seconds):" Height="64"/>
-            <Button x:Name="bt_connect" Content="Connect" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="bt_connect_Click"/>
-            <StackPanel x:Name="StatusPanel" Orientation="Vertical" RelativePanel.AlignBottomWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignLeftWithPanel="True">
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Margin="0,0,0,0">
+        <RelativePanel HorizontalAlignment="Left" Height="640" VerticalAlignment="Top" Width="360">
+            <TextBlock x:Name="title" RelativePanel.AlignTopWithPanel="True" Text="MQTT Locationtracker" FontSize="24" TextAlignment="Center" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" Margin="0,0,0,10"/>
+            <TextBox x:Name="tb_broker" TextWrapping="Wrap" Text="" Header="MQTT broker:" Margin="0,0,10,0" MinWidth="175" RelativePanel.Below="title"/>
+            <TextBox x:Name="tb_port" TextWrapping="Wrap" Text="1883" Header="MQTT port:" Margin="0,0,0,0" RelativePanel.RightOf="tb_broker" MinWidth="175" RelativePanel.AlignVerticalCenterWith="tb_broker"/>
+            <TextBlock x:Name="protocolversionlabel" Text="MQTT protocol version:" RelativePanel.Below="tb_broker" Margin="0,0,10,0"/>
+            <ComboBox x:Name="cb_protocol_version" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,8,10,-8" RelativePanel.Below="protocolversionlabel" MinWidth="175"/>
+            <ComboBox x:Name="cb_ssl_protocol_version" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Header="SSL Protocol:" Margin="-10,0,0,0" RelativePanel.RightOf="cb_secure" RelativePanel.AlignTopWith="protocolversionlabel" MinWidth="175"/>
+            <CheckBox x:Name="cb_secure" Content="Use secure connection" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" RelativePanel.Below="cb_protocol_version" MinWidth="175" Margin="0,8,20,-8" FontSize="14"/>
+            <TextBox x:Name="tb_username" TextWrapping="Wrap" Text="" Header="Username:" TextChanged="tb_username_TextChanged" Margin="0,0,10,0" RelativePanel.Below="cb_secure" MinWidth="175"/>
+            <PasswordBox x:Name="tb_password" Header="Password:" Margin="0,0,0,0" RelativePanel.RightOf="tb_username" RelativePanel.AlignTopWith="tb_username" MinWidth="175"/>
+            <TextBox x:Name="tb_deviceid" Header="DeviceID:" TextChanged="tb_deviceid_TextChanged" Margin="0,0,10,0" RelativePanel.Below="tb_username" MinWidth="175"/>
+            <TextBox x:Name="tb_interval" Text="30" Header="Interval (seconds):" Margin="0,0,0,0" RelativePanel.RightOf="tb_deviceid" RelativePanel.AlignTopWith="tb_deviceid" MinWidth="175"/>
+            <TextBox x:Name="tb_topic" Header="Topic:" Text="/owntracks/" RelativePanel.Below="tb_deviceid" Margin="0,0,0,0" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True"/>
+            <Button x:Name="bt_connect" Content="Connect" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="bt_connect_Click" Margin="0,10,0,10" RelativePanel.Below="tb_topic" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True"/>
+            <StackPanel x:Name="StatusPanel" Orientation="Vertical" RelativePanel.Below="bt_connect" RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignBottomWithPanel="True">
                 <TextBlock x:Name="StatusLabel" Margin="10,0,0,10" TextWrapping="Wrap" Text="Status:" />
                 <Border x:Name="StatusBorder" Margin="0,0,0,0">
-                    <ScrollViewer VerticalScrollMode="Auto"  VerticalScrollBarVisibility="Auto" MaxHeight="200">
-                        <TextBlock x:Name="StatusBlock" FontWeight="Bold" 
-                                   MaxWidth="{Binding ElementName=Splitter, Path=ActualWidth}" Margin="10,10,10,20" TextWrapping="Wrap"  />
+                    <ScrollViewer VerticalScrollMode="Auto"  VerticalScrollBarVisibility="Auto" MinHeight="150">
+                        <TextBlock x:Name="StatusBlock" FontWeight="Bold" MaxWidth="{Binding ElementName=Splitter, Path=ActualWidth}" Margin="10,10,10,20" TextWrapping="Wrap"  />
                     </ScrollViewer>
                 </Border>
             </StackPanel>
-        </StackPanel>
+        </RelativePanel>
     </Grid>
 </Page>
