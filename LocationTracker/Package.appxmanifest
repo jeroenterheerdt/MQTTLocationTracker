@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
-  <Identity Name="e21837d0-3a0a-4145-b0bb-6f6f43844cd3" Publisher="CN=jterh" Version="1.0.0.0" />
-  <mp:PhoneIdentity PhoneProductId="e21837d0-3a0a-4145-b0bb-6f6f43844cd3" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+  <Identity Name="43255JeroenTH.MQTTLocationTracker" Publisher="CN=B1B8F8FE-E4E1-4D24-B0E8-34B0AAACAA42" Version="1.1.5.0" />
+  <mp:PhoneIdentity PhoneProductId="2bd63439-f7bd-457c-be08-c503ebbe6e0e" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>MQTTLocationTracker</DisplayName>
-    <PublisherDisplayName>jeroenth</PublisherDisplayName>
+    <DisplayName>MQTT Location Tracker</DisplayName>
+    <PublisherDisplayName>JeroenTH</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
@@ -15,7 +15,8 @@
   </Resources>
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="LocationTracker.App">
-      <uap:VisualElements DisplayName="MQTTLocationTracker" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="Location tracker that send your location to a MQTT broker. Useful for home automation and geofencing scenarios." BackgroundColor="transparent">
+      <uap:VisualElements DisplayName="MQTT Location Tracker" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="Location tracker that send your location to a MQTT broker. Useful for home automation and geofencing scenarios." BackgroundColor="transparent">
+        <uap:LockScreen Notification="badge" BadgeLogo="Assets\BadgeLogo.png" />
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" ShortName="MQTTLocationTracker" Square310x310Logo="Assets\LargeTile.png" Square71x71Logo="Assets\SmallTile.png">
           <uap:ShowNameOnTiles>
             <uap:ShowOn Tile="square150x150Logo" />

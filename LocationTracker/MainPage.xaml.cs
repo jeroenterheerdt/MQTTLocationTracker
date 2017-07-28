@@ -41,6 +41,13 @@ namespace LocationTracker
         StorageFolder localFolder;
 
         private long counter;
+        private string broker;
+        private int port;
+        private bool secure;
+        private MqttSslProtocols sslprotocol;
+        private MqttProtocolVersion protocolversion;
+        private string username;
+        private string password;
 
         public enum NotifyType
         {
@@ -92,14 +99,7 @@ namespace LocationTracker
                 periodicTimer = null;
             }
         }
-        private void ConnectToBroker(string h, int p, Boolean s, MqttSslProtocols sp, MqttProtocolVersion v,string username, string password)
-        {
-            this.client = new MqttClient(h, p, s, sp);
-            //for built in mqtt broker of home assistant
-            this.client.ProtocolVersion = v;
-            this.client.Connect(Guid.NewGuid().ToString(),username,password);
-}
-
+        
         private void bt_connect_Click(object sender, RoutedEventArgs e)
         {
             var broker = tb_broker.Text.Trim();
@@ -156,9 +156,16 @@ namespace LocationTracker
                                     {
                                         //store all settings
                                         StoreAllSettings();
-                                        ConnectToBroker(tb_broker.Text, port, cb_secure.IsChecked.Value, sslprotocol, protocolversion, tb_username.Text, tb_password.Password);
-
-
+                                        this.broker = tb_broker.Text;
+                                        this.port = port;
+                                        this.secure = cb_secure.IsChecked.Value;
+                                        this.sslprotocol = sslprotocol;
+                                        this.protocolversion = protocolversion;
+                                        this.username = tb_username.Text;
+                                        this.password = tb_password.Password;
+                                        MqttBroker mqttbroker = new MqttBroker(this.broker,this.port,this.secure,this.sslprotocol,this.protocolversion,this.username,this.password);
+                                        mqttbroker.Connect();
+                                        
                                         //register extended execution.
                                         BeginExtendedExecution(_interval);
                                     }
@@ -263,10 +270,12 @@ namespace LocationTracker
                     //this.client.Publish("home-assistant/jeroen", System.Text.Encoding.UTF8.GetBytes("{'message': 'barf'}"));
                     try
                     {
-                        await Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
-                        { 
-                            this.client.Publish(tb_topic.Text, System.Text.Encoding.UTF8.GetBytes(message));
-                            
+                        MqttBroker mqttbroker = new MqttBroker(this.broker, this.port, this.secure, this.sslprotocol, this.protocolversion, this.username, this.password);
+                        mqttbroker.Connect();
+
+                        await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                        {
+                        mqttbroker.Publish(tb_topic.Text, System.Text.Encoding.UTF8.GetBytes(message));    
                             
                         });
                         counter++;
@@ -454,7 +463,7 @@ namespace LocationTracker
         {
             var splits = tb_topic.Text.Split('/');
 
-            tb_topic.Text = "/" + splits[1] + "/" + tb_username.Text + "/" + tb_deviceid.Text;
+            tb_topic.Text = splits[0] + "/" + tb_username.Text + "/" + tb_deviceid.Text;
         }
 
         private void tb_deviceid_TextChanged(object sender, TextChangedEventArgs e)
