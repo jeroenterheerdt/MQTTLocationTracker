@@ -229,7 +229,7 @@ namespace LocationTracker
                     this.NotifyUser("Extended execution allowed. Please navigate away from this app.", NotifyType.StatusMessage);
                     session = newSession;
                     Geolocator geolocator = await StartLocationTrackingAsync();
-                    periodicTimer = new Timer(OnTimer, geolocator, TimeSpan.FromSeconds(interval), TimeSpan.FromSeconds(10));
+                    periodicTimer = new Timer(OnTimer, geolocator, TimeSpan.FromSeconds(interval), TimeSpan.FromSeconds(interval));
                     break;
 
                 default:
